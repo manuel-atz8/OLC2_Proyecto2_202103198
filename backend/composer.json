@@ -1,0 +1,20 @@
+{
+    "name": "mnl/golampi-interpreter",
+    "description": "golampi",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Golampi\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "mnl.atz"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "antlr/antlr4-php-runtime": "^0.9.1"
+    }
+}
