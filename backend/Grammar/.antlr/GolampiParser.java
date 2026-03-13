@@ -1937,9 +1937,7 @@ public class GolampiParser extends Parser {
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class DerefExprContext extends ExprContext {
-		public ExprContext expr() {
-			return getRuleContext(ExprContext.class,0);
-		}
+		public TerminalNode ID() { return getToken(GolampiParser.ID, 0); }
 		public DerefExprContext(ExprContext ctx) { copyFrom(ctx); }
 	}
 	@SuppressWarnings("CheckReturnValue")
@@ -2056,7 +2054,7 @@ public class GolampiParser extends Parser {
 				setState(312);
 				match(T__3);
 				setState(313);
-				expr(2);
+				match(ID);
 				}
 				break;
 			case T__0:
@@ -3315,7 +3313,7 @@ public class GolampiParser extends Parser {
 		"\u0000\u0133\u013c\u0003:\u001d\u0005\u0134\u0135\u0005\u001a\u0000\u0000"+
 		"\u0135\u013c\u0003:\u001d\u0004\u0136\u0137\u0005\u001e\u0000\u0000\u0137"+
 		"\u013c\u0005;\u0000\u0000\u0138\u0139\u0005\u0004\u0000\u0000\u0139\u013c"+
-		"\u0003:\u001d\u0002\u013a\u013c\u0003<\u001e\u0000\u013b\u0131\u0001\u0000"+
+		"\u0005;\u0000\u0000\u013a\u013c\u0003<\u001e\u0000\u013b\u0131\u0001\u0000"+
 		"\u0000\u0000\u013b\u0134\u0001\u0000\u0000\u0000\u013b\u0136\u0001\u0000"+
 		"\u0000\u0000\u013b\u0138\u0001\u0000\u0000\u0000\u013b\u013a\u0001\u0000"+
 		"\u0000\u0000\u013c\u0151\u0001\u0000\u0000\u0000\u013d\u013e\n\u000b\u0000"+

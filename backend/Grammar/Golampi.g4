@@ -159,7 +159,7 @@ expr
     | '!' expr                              # NotExpr
     | '-' expr                              # NegExpr
     | '&' ID                                # AddrExpr
-    | '*' expr                              # DerefExpr
+    | '*' ID                                # DerefExpr
     | atom                                  # AtomExpr
     ;
 

@@ -252,7 +252,7 @@ namespace {
 		    3, 58, 29, 0, 304, 57, 1, 0, 0, 0, 305, 306, 6, 29, -1, 0, 306, 307, 
 		    5, 29, 0, 0, 307, 316, 3, 58, 29, 5, 308, 309, 5, 26, 0, 0, 309, 316, 
 		    3, 58, 29, 4, 310, 311, 5, 30, 0, 0, 311, 316, 5, 59, 0, 0, 312, 313, 
-		    5, 4, 0, 0, 313, 316, 3, 58, 29, 2, 314, 316, 3, 60, 30, 0, 315, 305, 
+		    5, 4, 0, 0, 313, 316, 5, 59, 0, 0, 314, 316, 3, 60, 30, 0, 315, 305, 
 		    1, 0, 0, 0, 315, 308, 1, 0, 0, 0, 315, 310, 1, 0, 0, 0, 315, 312, 
 		    1, 0, 0, 0, 315, 314, 1, 0, 0, 0, 316, 337, 1, 0, 0, 0, 317, 318, 
 		    10, 11, 0, 0, 318, 319, 5, 54, 0, 0, 319, 336, 3, 58, 29, 12, 320, 
@@ -1684,7 +1684,7 @@ namespace {
 				    	$this->setState(312);
 				    	$this->match(self::T__3);
 				    	$this->setState(313);
-				    	$this->recursiveExpr(2);
+				    	$this->match(self::ID);
 				    	break;
 
 				    case self::T__0:
@@ -4501,9 +4501,9 @@ namespace Context {
 		    $this->copyFrom($context);
 	    }
 
-	    public function expr(): ?ExprContext
+	    public function ID(): ?TerminalNode
 	    {
-	    	return $this->getTypedRuleContext(ExprContext::class, 0);
+	        return $this->getToken(GolampiParser::ID, 0);
 	    }
 
 		public function enterRule(ParseTreeListener $listener): void

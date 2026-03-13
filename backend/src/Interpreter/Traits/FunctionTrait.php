@@ -229,7 +229,12 @@ trait FunctionTrait
             return GolampiValue::nil();
         }
 
-        return new GolampiValue('*' . $symbol->dataType, $name);
+        // Guardar referencia con el environment donde vive la variable
+        error_log("RefArg: name={$name}, type=*{$symbol->dataType}, value_type=" . gettype($symbol->value));
+        return new GolampiValue('*' . $symbol->dataType, [
+            'env' => $this->env,
+            'name' => $name,
+        ]);
     }
 
     /**

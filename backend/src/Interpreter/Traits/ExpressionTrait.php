@@ -165,7 +165,7 @@ trait ExpressionTrait
     }
 
     /**
-     * &ID — obtener dirección
+     * &ID — obtener dirección (referencia con environment)
      */
     public function visitAddrExpr($ctx): mixed
     {
@@ -177,29 +177,52 @@ trait ExpressionTrait
             return GolampiValue::nil();
         }
 
-        // Retornamos una referencia especial: tipo puntero con el nombre
-        return new GolampiValue('*' . $symbol->dataType, $name);
+        return new GolampiValue('*' . $symbol->dataType, [
+            'env' => $this->env,
+            'name' => $name,
+        ]);
     }
 
     /**
-     * *expr — desreferenciar
+     * *ID — desreferenciar variable puntero
      */
     public function visitDerefExpr($ctx): mixed
     {
-        $val = $this->visit($ctx->expr());
+        $name = $ctx->ID()->getText();
+        $symbol = $this->env->lookup($name);
 
-        if ($val === null || !str_starts_with($val->type, '*')) {
-            $this->semanticError("No se puede desreferenciar un valor que no es puntero", $ctx);
-            return GolampiValue::nil();
-        }
-
-        // El value contiene el nombre de la variable referenciada
-        $symbol = $this->env->lookup($val->value);
         if ($symbol === null) {
+            $this->semanticError("Variable '{$name}' no declarada", $ctx);
             return GolampiValue::nil();
         }
 
-        return new GolampiValue($symbol->dataType, $symbol->value);
+        if (!str_starts_with($symbol->dataType, '*')) {
+            $this->semanticError("'{$name}' no es un puntero", $ctx);
+            return GolampiValue::nil();
+        }
+
+        // Referencia con environment
+        if (is_array($symbol->value) && isset($symbol->value['env'])) {
+            $refEnv = $symbol->value['env'];
+            $refName = $symbol->value['name'];
+            $refSymbol = $refEnv->lookup($refName);
+
+            if ($refSymbol === null) {
+                $this->semanticError("Referencia inválida del puntero '{$name}'", $ctx);
+                return GolampiValue::nil();
+            }
+
+            $baseType = substr($symbol->dataType, 1);
+            return new GolampiValue($baseType, $refSymbol->value);
+        }
+
+        // Fallback
+        $refSymbol = $this->env->lookup($symbol->value);
+        if ($refSymbol === null) {
+            return GolampiValue::nil();
+        }
+
+        return new GolampiValue($refSymbol->dataType, $refSymbol->value);
     }
 
     /**

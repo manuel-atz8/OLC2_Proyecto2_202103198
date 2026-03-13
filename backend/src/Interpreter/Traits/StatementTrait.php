@@ -103,6 +103,30 @@ trait StatementTrait
                 return null;
             }
 
+            // Resolver la referencia del puntero
+            if (is_array($symbol->value) && isset($symbol->value['env'])) {
+                $refEnv = $symbol->value['env'];
+                $refName = $symbol->value['name'];
+                $refSymbol = $refEnv->lookup($refName);
+
+                if ($refSymbol === null) {
+                    $this->semanticError("Referencia inválida del puntero '{$name}'", $ctx);
+                    return null;
+                }
+
+                if ($op !== '=') {
+                    $current = new GolampiValue($refSymbol->dataType, $refSymbol->value);
+                    $val = $this->resolveCompoundOp($op, $current, $val, $ctx);
+                    if ($val === null) {
+                        return null;
+                    }
+                }
+
+                $refEnv->assign($refName, $val->value);
+                return null;
+            }
+
+            // Fallback
             $refName = $symbol->value;
             $refSymbol = $this->env->lookup($refName);
 

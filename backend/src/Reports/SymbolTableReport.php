@@ -84,8 +84,14 @@ class SymbolTableReport
         if (is_bool($value)) {
             return $value ? 'true' : 'false';
         }
+        if ($value instanceof \Golampi\Runtime\Types\GolampiArray) {
+            return $value->fullType();
+        }
+        if (is_array($value) && isset($value['env'])) {
+            return '&' . $value['name'];
+        }
         if (is_array($value)) {
-            return '{' . implode(',', $value) . '}';
+            return '{' . implode(',', array_map(fn($v) => is_scalar($v) ? (string)$v : '?', $value)) . '}';
         }
         if (is_object($value)) {
             return '(objeto)';

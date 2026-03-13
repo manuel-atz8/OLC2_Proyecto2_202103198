@@ -62,8 +62,12 @@ class SymbolTableCollector
         if ($value instanceof \Golampi\Runtime\Types\GolampiArray) {
             return $value->fullType();
         }
+        // Referencia de puntero (array con env y name)
+        if (is_array($value) && isset($value['env'])) {
+            return '&' . $value['name'];
+        }
         if (is_array($value)) {
-            return '{' . implode(',', $value) . '}';
+            return '{' . implode(',', array_map(fn($v) => is_scalar($v) ? (string)$v : '?', $value)) . '}';
         }
         if (is_object($value)) {
             return '(objeto)';
