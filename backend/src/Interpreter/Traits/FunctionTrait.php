@@ -152,16 +152,18 @@ trait FunctionTrait
             $val = $args[$i] ?? GolampiValue::nil();
 
             if ($param['isPointer']) {
-                // Paso por referencia: el valor es el nombre de la variable
+                // Paso por referencia: guardar la referencia completa
                 $symbol = new Symbol(
                     $param['name'],
-                    '*' . $param['type'],
-                    $val->value,
+                    $param['type'],       // tipo base sin *, ej: int32
+                    $val->value,          // el array con ['env' => ..., 'name' => ...]
                     $func->name,
                     'parameter',
                     $func->line,
                     $func->column
                 );
+                // Marcar como puntero internamente
+                $symbol->dataType = '*' . $param['type'];
             } else {
                 $symbol = new Symbol(
                     $param['name'],

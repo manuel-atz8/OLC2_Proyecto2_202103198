@@ -59,15 +59,24 @@ class GolampiValue
     public function toPrintable(): string
     {
         if ($this->isNil()) {
-            return 'nil';
+            return '<nil>';
         }
         if ($this->isBool()) {
             return $this->value ? 'true' : 'false';
         }
         if ($this->isRune()) {
-            return mb_chr($this->value, 'UTF-8');
+            return (string) $this->value;
         }
         return (string) $this->value;
+    }
+
+    /** */
+    public function getTypeString(): string
+    {
+        if ($this->value instanceof \Golampi\Runtime\Types\GolampiArray) {
+            return $this->value->fullType();
+        }
+        return $this->type;
     }
 
     /**

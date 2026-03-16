@@ -368,137 +368,135 @@ interface GolampiListener extends ParseTreeListener {
 	 */
 	public function exitExprStmt(Context\ExprStmtContext $context): void;
 	/**
-	 * Enter a parse tree produced by the `AndExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
+	 * Enter a parse tree produced by {@see GolampiParser::expr()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterExpr(Context\ExprContext $context): void;
+	/**
+	 * Exit a parse tree produced by {@see GolampiParser::expr()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitExpr(Context\ExprContext $context): void;
+	/**
+	 * Enter a parse tree produced by {@see GolampiParser::orExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterOrExpr(Context\OrExprContext $context): void;
+	/**
+	 * Exit a parse tree produced by {@see GolampiParser::orExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitOrExpr(Context\OrExprContext $context): void;
+	/**
+	 * Enter a parse tree produced by {@see GolampiParser::andExpr()}.
 	 * @param $context The parse tree.
 	 */
 	public function enterAndExpr(Context\AndExprContext $context): void;
 	/**
-	 * Exit a parse tree produced by the `AndExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
+	 * Exit a parse tree produced by {@see GolampiParser::andExpr()}.
 	 * @param $context The parse tree.
 	 */
 	public function exitAndExpr(Context\AndExprContext $context): void;
 	/**
-	 * Enter a parse tree produced by the `MulExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
+	 * Enter a parse tree produced by {@see GolampiParser::eqExpr()}.
 	 * @param $context The parse tree.
 	 */
-	public function enterMulExpr(Context\MulExprContext $context): void;
+	public function enterEqExpr(Context\EqExprContext $context): void;
 	/**
-	 * Exit a parse tree produced by the `MulExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
+	 * Exit a parse tree produced by {@see GolampiParser::eqExpr()}.
 	 * @param $context The parse tree.
 	 */
-	public function exitMulExpr(Context\MulExprContext $context): void;
+	public function exitEqExpr(Context\EqExprContext $context): void;
 	/**
-	 * Enter a parse tree produced by the `AddrExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
-	 * @param $context The parse tree.
-	 */
-	public function enterAddrExpr(Context\AddrExprContext $context): void;
-	/**
-	 * Exit a parse tree produced by the `AddrExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
-	 * @param $context The parse tree.
-	 */
-	public function exitAddrExpr(Context\AddrExprContext $context): void;
-	/**
-	 * Enter a parse tree produced by the `EqualExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
-	 * @param $context The parse tree.
-	 */
-	public function enterEqualExpr(Context\EqualExprContext $context): void;
-	/**
-	 * Exit a parse tree produced by the `EqualExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
-	 * @param $context The parse tree.
-	 */
-	public function exitEqualExpr(Context\EqualExprContext $context): void;
-	/**
-	 * Enter a parse tree produced by the `DerefExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
-	 * @param $context The parse tree.
-	 */
-	public function enterDerefExpr(Context\DerefExprContext $context): void;
-	/**
-	 * Exit a parse tree produced by the `DerefExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
-	 * @param $context The parse tree.
-	 */
-	public function exitDerefExpr(Context\DerefExprContext $context): void;
-	/**
-	 * Enter a parse tree produced by the `RelExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
+	 * Enter a parse tree produced by {@see GolampiParser::relExpr()}.
 	 * @param $context The parse tree.
 	 */
 	public function enterRelExpr(Context\RelExprContext $context): void;
 	/**
-	 * Exit a parse tree produced by the `RelExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
+	 * Exit a parse tree produced by {@see GolampiParser::relExpr()}.
 	 * @param $context The parse tree.
 	 */
 	public function exitRelExpr(Context\RelExprContext $context): void;
 	/**
-	 * Enter a parse tree produced by the `NegExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
-	 * @param $context The parse tree.
-	 */
-	public function enterNegExpr(Context\NegExprContext $context): void;
-	/**
-	 * Exit a parse tree produced by the `NegExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
-	 * @param $context The parse tree.
-	 */
-	public function exitNegExpr(Context\NegExprContext $context): void;
-	/**
-	 * Enter a parse tree produced by the `AddExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
+	 * Enter a parse tree produced by {@see GolampiParser::addExpr()}.
 	 * @param $context The parse tree.
 	 */
 	public function enterAddExpr(Context\AddExprContext $context): void;
 	/**
-	 * Exit a parse tree produced by the `AddExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
+	 * Exit a parse tree produced by {@see GolampiParser::addExpr()}.
 	 * @param $context The parse tree.
 	 */
 	public function exitAddExpr(Context\AddExprContext $context): void;
 	/**
+	 * Enter a parse tree produced by {@see GolampiParser::mulExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterMulExpr(Context\MulExprContext $context): void;
+	/**
+	 * Exit a parse tree produced by {@see GolampiParser::mulExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitMulExpr(Context\MulExprContext $context): void;
+	/**
 	 * Enter a parse tree produced by the `NotExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
+	 * labeled alternative in {@see GolampiParser::unaryExpr()}.
 	 * @param $context The parse tree.
 	 */
 	public function enterNotExpr(Context\NotExprContext $context): void;
 	/**
 	 * Exit a parse tree produced by the `NotExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
+	 * in {@see GolampiParser::unaryExpr()}.
 	 * @param $context The parse tree.
 	 */
 	public function exitNotExpr(Context\NotExprContext $context): void;
 	/**
+	 * Enter a parse tree produced by the `NegExpr`
+	 * labeled alternative in {@see GolampiParser::unaryExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterNegExpr(Context\NegExprContext $context): void;
+	/**
+	 * Exit a parse tree produced by the `NegExpr` labeled alternative
+	 * in {@see GolampiParser::unaryExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitNegExpr(Context\NegExprContext $context): void;
+	/**
+	 * Enter a parse tree produced by the `AddrExpr`
+	 * labeled alternative in {@see GolampiParser::unaryExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterAddrExpr(Context\AddrExprContext $context): void;
+	/**
+	 * Exit a parse tree produced by the `AddrExpr` labeled alternative
+	 * in {@see GolampiParser::unaryExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitAddrExpr(Context\AddrExprContext $context): void;
+	/**
+	 * Enter a parse tree produced by the `DerefExpr`
+	 * labeled alternative in {@see GolampiParser::unaryExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterDerefExpr(Context\DerefExprContext $context): void;
+	/**
+	 * Exit a parse tree produced by the `DerefExpr` labeled alternative
+	 * in {@see GolampiParser::unaryExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitDerefExpr(Context\DerefExprContext $context): void;
+	/**
 	 * Enter a parse tree produced by the `AtomExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
+	 * labeled alternative in {@see GolampiParser::unaryExpr()}.
 	 * @param $context The parse tree.
 	 */
 	public function enterAtomExpr(Context\AtomExprContext $context): void;
 	/**
 	 * Exit a parse tree produced by the `AtomExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
+	 * in {@see GolampiParser::unaryExpr()}.
 	 * @param $context The parse tree.
 	 */
 	public function exitAtomExpr(Context\AtomExprContext $context): void;
-	/**
-	 * Enter a parse tree produced by the `OrExpr`
-	 * labeled alternative in {@see GolampiParser::expr()}.
-	 * @param $context The parse tree.
-	 */
-	public function enterOrExpr(Context\OrExprContext $context): void;
-	/**
-	 * Exit a parse tree produced by the `OrExpr` labeled alternative
-	 * in {@see GolampiParser::expr()}.
-	 * @param $context The parse tree.
-	 */
-	public function exitOrExpr(Context\OrExprContext $context): void;
 	/**
 	 * Enter a parse tree produced by the `FloatAtom`
 	 * labeled alternative in {@see GolampiParser::atom()}.

@@ -140,7 +140,7 @@ trait BuiltinTrait
             return GolampiValue::nil();
         }
 
-        return new GolampiValue('string', $args[0]->type);
+        return new GolampiValue('string', $args[0]->getTypeString());
     }
 
     /**

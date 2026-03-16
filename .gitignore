@@ -1,0 +1,22 @@
+# PHP / Composer
+backend/vendor/
+backend/composer.lock
+
+# ANTLR archivos generados
+backend/Grammar/*.php
+backend/Grammar/*.interp
+backend/Grammar/*.tokens
+
+# Node / React
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

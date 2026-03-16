@@ -38,6 +38,23 @@ trait StatementTrait
                 return null;
             }
 
+            // Si es puntero, asignar al referenciado
+            if (str_starts_with($symbol->dataType, '*') && is_array($symbol->value) && isset($symbol->value['env'])) {
+                $refEnv = $symbol->value['env'];
+                $refName = $symbol->value['name'];
+
+                $finalValue = $val;
+                if ($op !== '=') {
+                    $refSymbol = $refEnv->lookup($refName);
+                    $current = new GolampiValue(substr($symbol->dataType, 1), $refSymbol->value);
+                    $finalValue = $this->resolveCompoundOp($op, $current, $val, $ctx);
+                    if ($finalValue === null) return null;
+                }
+
+                $refEnv->assign($refName, $finalValue->value);
+                return null;
+            }
+
             $finalValue = $this->resolveCompoundAssign($op, $symbol, $val, $ctx);
             if ($finalValue !== null) {
                 $this->env->assign($name, $finalValue->value);
@@ -56,14 +73,25 @@ trait StatementTrait
                 return null;
             }
 
-            if (!($symbol->value instanceof GolampiArray)) {
+            // Auto-desreferencia puntero a arreglo
+            $array = $symbol->value;
+            if (str_starts_with($symbol->dataType, '*') && is_array($symbol->value) && isset($symbol->value['env'])) {
+                $refEnv = $symbol->value['env'];
+                $refName = $symbol->value['name'];
+                $refSymbol = $refEnv->lookup($refName);
+                if ($refSymbol === null) {
+                    $this->semanticError("Referencia inválida", $ctx);
+                    return null;
+                }
+                $array = $refSymbol->value;
+            }
+
+            if (!($array instanceof GolampiArray)) {
                 $this->semanticError("'{$name}' no es un arreglo", $ctx);
                 return null;
             }
 
-            $array = $symbol->value;
             $indices = [];
-
             foreach ($leftValue->expr() as $exprCtx) {
                 $idx = $this->visit($exprCtx);
                 if ($idx === null || !$idx->isInt()) {
@@ -81,9 +109,7 @@ trait StatementTrait
                 }
                 $current = new GolampiValue($array->elementType, $currentVal);
                 $val = $this->resolveCompoundOp($op, $current, $val, $ctx);
-                if ($val === null) {
-                    return null;
-                }
+                if ($val === null) return null;
             }
 
             if (!$array->set($indices, $val->value)) {

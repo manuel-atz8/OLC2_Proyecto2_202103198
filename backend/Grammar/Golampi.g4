@@ -150,17 +150,39 @@ exprStmt
 
 // Expresiones
 expr
-    : expr OR expr                          # OrExpr
-    | expr AND expr                         # AndExpr
-    | expr ('==' | '!=') expr               # EqualExpr
-    | expr ('>' | '>=' | '<' | '<=') expr   # RelExpr
-    | expr ('+' | '-') expr                 # AddExpr
-    | expr ('*' | '/' | '%') expr           # MulExpr
-    | '!' expr                              # NotExpr
-    | '-' expr                              # NegExpr
-    | '&' ID                                # AddrExpr
-    | '*' ID                                # DerefExpr
-    | atom                                  # AtomExpr
+    : orExpr
+    ;
+
+orExpr
+    : andExpr (OR andExpr)*
+    ;
+
+andExpr
+    : eqExpr (AND eqExpr)*
+    ;
+
+eqExpr
+    : relExpr (('==' | '!=') relExpr)*
+    ;
+
+relExpr
+    : addExpr (('>' | '>=' | '<' | '<=') addExpr)*
+    ;
+
+addExpr
+    : mulExpr (('+' | '-') mulExpr)*
+    ;
+
+mulExpr
+    : unaryExpr (('*' | '/' | '%') unaryExpr)*
+    ;
+
+unaryExpr
+    : '!' unaryExpr                              # NotExpr
+    | '-' unaryExpr                              # NegExpr
+    | '&' ID                                     # AddrExpr
+    | '*' ID                                     # DerefExpr
+    | atom                                       # AtomExpr
     ;
 
 atom

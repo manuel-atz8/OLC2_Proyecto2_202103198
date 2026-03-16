@@ -9,137 +9,171 @@ use Golampi\Semantic\TypeChecker;
 trait ExpressionTrait
 {
     /**
-     * expr OR expr
-     * Cortocircuito: si izquierda es true, no evalúa derecha.
+     * orExpr: andExpr (OR andExpr)*
      */
     public function visitOrExpr($ctx): mixed
     {
-        $left = $this->visit($ctx->expr(0));
+        $left = $this->visit($ctx->andExpr(0));
 
-        if ($left === null || !$left->isBool()) {
-            $this->semanticError("Operador '||' requiere operandos booleanos", $ctx);
-            return GolampiValue::nil();
+        for ($i = 1; $i < count($ctx->andExpr()); $i++) {
+            if ($left === null || !$left->isBool()) {
+                $this->semanticError("Operador '||' requiere operandos booleanos", $ctx);
+                return GolampiValue::nil();
+            }
+            if ($left->value === true) {
+                return new GolampiValue('bool', true);
+            }
+            $right = $this->visit($ctx->andExpr($i));
+            $left = TypeChecker::logicalOp('||', $left, $right);
         }
 
-        if ($left->value === true) {
-            return new GolampiValue('bool', true);
-        }
-
-        $right = $this->visit($ctx->expr(1));
-        return TypeChecker::logicalOp('||', $left, $right);
+        return $left;
     }
 
     /**
-     * expr AND expr
-     * Cortocircuito: si izquierda es false, no evalúa derecha.
+     * andExpr: eqExpr (AND eqExpr)*
      */
     public function visitAndExpr($ctx): mixed
     {
-        $left = $this->visit($ctx->expr(0));
+        $left = $this->visit($ctx->eqExpr(0));
 
-        if ($left === null || !$left->isBool()) {
-            $this->semanticError("Operador '&&' requiere operandos booleanos", $ctx);
-            return GolampiValue::nil();
+        for ($i = 1; $i < count($ctx->eqExpr()); $i++) {
+            if ($left === null || !$left->isBool()) {
+                $this->semanticError("Operador '&&' requiere operandos booleanos", $ctx);
+                return GolampiValue::nil();
+            }
+            if ($left->value === false) {
+                return new GolampiValue('bool', false);
+            }
+            $right = $this->visit($ctx->eqExpr($i));
+            $left = TypeChecker::logicalOp('&&', $left, $right);
         }
 
-        if ($left->value === false) {
-            return new GolampiValue('bool', false);
-        }
-
-        $right = $this->visit($ctx->expr(1));
-        return TypeChecker::logicalOp('&&', $left, $right);
+        return $left;
     }
 
     /**
-     * expr == expr | expr != expr
+     * eqExpr: relExpr (('==' | '!=') relExpr)*
      */
-    public function visitEqualExpr($ctx): mixed
+    public function visitEqExpr($ctx): mixed
     {
-        $left = $this->visit($ctx->expr(0));
-        $right = $this->visit($ctx->expr(1));
-        $op = $ctx->getChild(1)->getText();
+        $left = $this->visit($ctx->relExpr(0));
+        $children = $ctx->children;
 
-        $result = TypeChecker::relationalOp($op, $left, $right);
+        $relIndex = 1;
+        for ($i = 1; $i < count($children); $i += 2) {
+            $op = $children[$i]->getText();
+            $right = $this->visit($ctx->relExpr($relIndex));
+            $relIndex++;
 
-        if ($result->isNil()) {
-            $this->semanticError(
-                "Operación '{$op}' inválida entre '{$left->type}' y '{$right->type}'",
-                $ctx
-            );
+            $result = TypeChecker::relationalOp($op, $left, $right);
+
+            if ($result->isNil() && !$left->isNil() && !$right->isNil()) {
+                $this->semanticError(
+                    "Operación '{$op}' inválida entre '{$left->type}' y '{$right->type}'",
+                    $ctx
+                );
+            }
+
+            $left = $result;
         }
 
-        return $result;
+        return $left;
     }
 
     /**
-     * expr > expr | expr >= expr | expr < expr | expr <= expr
+     * relExpr: addExpr (('>' | '>=' | '<' | '<=') addExpr)*
      */
     public function visitRelExpr($ctx): mixed
     {
-        $left = $this->visit($ctx->expr(0));
-        $right = $this->visit($ctx->expr(1));
-        $op = $ctx->getChild(1)->getText();
+        $left = $this->visit($ctx->addExpr(0));
+        $children = $ctx->children;
 
-        $result = TypeChecker::relationalOp($op, $left, $right);
+        $addIndex = 1;
+        for ($i = 1; $i < count($children); $i += 2) {
+            $op = $children[$i]->getText();
+            $right = $this->visit($ctx->addExpr($addIndex));
+            $addIndex++;
 
-        if ($result->isNil()) {
-            $this->semanticError(
-                "Operación '{$op}' inválida entre '{$left->type}' y '{$right->type}'",
-                $ctx
-            );
+            $result = TypeChecker::relationalOp($op, $left, $right);
+
+            if ($result->isNil() && !$left->isNil() && !$right->isNil()) {
+                $this->semanticError(
+                    "Operación '{$op}' inválida entre '{$left->type}' y '{$right->type}'",
+                    $ctx
+                );
+            }
+
+            $left = $result;
         }
 
-        return $result;
+        return $left;
     }
 
     /**
-     * expr + expr | expr - expr
+     * addExpr: mulExpr (('+' | '-') mulExpr)*
      */
     public function visitAddExpr($ctx): mixed
     {
-        $left = $this->visit($ctx->expr(0));
-        $right = $this->visit($ctx->expr(1));
-        $op = $ctx->getChild(1)->getText();
+        $left = $this->visit($ctx->mulExpr(0));
+        $children = $ctx->children;
 
-        $result = TypeChecker::arithmeticOp($op, $left, $right);
+        $mulIndex = 1;
+        for ($i = 1; $i < count($children); $i += 2) {
+            $op = $children[$i]->getText();
+            $right = $this->visit($ctx->mulExpr($mulIndex));
+            $mulIndex++;
 
-        if ($result->isNil()) {
-            $this->semanticError(
-                "Operación '{$op}' inválida entre '{$left->type}' y '{$right->type}'",
-                $ctx
-            );
+            $result = TypeChecker::arithmeticOp($op, $left, $right);
+
+            if ($result->isNil() && !$left->isNil() && !$right->isNil()) {
+                $this->semanticError(
+                    "Operación '{$op}' inválida entre '{$left->type}' y '{$right->type}'",
+                    $ctx
+                );
+            }
+
+            $left = $result;
         }
 
-        return $result;
+        return $left;
     }
 
     /**
-     * expr * expr | expr / expr | expr % expr
+     * mulExpr: unaryExpr (('*' | '/' | '%') unaryExpr)*
      */
     public function visitMulExpr($ctx): mixed
     {
-        $left = $this->visit($ctx->expr(0));
-        $right = $this->visit($ctx->expr(1));
-        $op = $ctx->getChild(1)->getText();
+        $left = $this->visit($ctx->unaryExpr(0));
+        $children = $ctx->children;
 
-        $result = TypeChecker::arithmeticOp($op, $left, $right);
+        $unaryIndex = 1;
+        for ($i = 1; $i < count($children); $i += 2) {
+            $op = $children[$i]->getText();
+            $right = $this->visit($ctx->unaryExpr($unaryIndex));
+            $unaryIndex++;
 
-        if ($result->isNil()) {
-            $this->semanticError(
-                "Operación '{$op}' inválida entre '{$left->type}' y '{$right->type}'",
-                $ctx
-            );
+            $result = TypeChecker::arithmeticOp($op, $left, $right);
+
+            if ($result->isNil() && !$left->isNil() && !$right->isNil()) {
+                $this->semanticError(
+                    "Operación '{$op}' inválida entre '{$left->type}' y '{$right->type}'",
+                    $ctx
+                );
+            }
+
+            $left = $result;
         }
 
-        return $result;
+        return $left;
     }
 
     /**
-     * !expr
+     * !unaryExpr
      */
     public function visitNotExpr($ctx): mixed
     {
-        $val = $this->visit($ctx->expr());
+        $val = $this->visit($ctx->unaryExpr());
         $result = TypeChecker::logicalOp('!', $val);
 
         if ($result->isNil()) {
@@ -150,11 +184,11 @@ trait ExpressionTrait
     }
 
     /**
-     * -expr
+     * -unaryExpr
      */
     public function visitNegExpr($ctx): mixed
     {
-        $val = $this->visit($ctx->expr());
+        $val = $this->visit($ctx->unaryExpr());
         $result = TypeChecker::negateOp($val);
 
         if ($result->isNil()) {
@@ -308,8 +342,24 @@ trait ExpressionTrait
             return GolampiValue::nil();
         }
 
+        // Auto-desreferencia para parámetros puntero
+        if (str_starts_with($symbol->dataType, '*') && is_array($symbol->value) && isset($symbol->value['env'])) {
+            $refEnv = $symbol->value['env'];
+            $refName = $symbol->value['name'];
+            $refSymbol = $refEnv->lookup($refName);
+
+            if ($refSymbol === null) {
+                $this->semanticError("Referencia inválida del puntero '{$name}'", $ctx);
+                return GolampiValue::nil();
+            }
+
+            $baseType = substr($symbol->dataType, 1);
+            return new GolampiValue($baseType, $refSymbol->value);
+        }
+
         return new GolampiValue($symbol->dataType, $symbol->value);
     }
+
 
     /**
      * ID[expr] — acceso a arreglo
@@ -324,14 +374,25 @@ trait ExpressionTrait
             return GolampiValue::nil();
         }
 
-        if (!($symbol->value instanceof GolampiArray)) {
+        // Auto-desreferencia puntero a arreglo
+        $arrayObj = $symbol->value;
+        if (str_starts_with($symbol->dataType, '*') && is_array($symbol->value) && isset($symbol->value['env'])) {
+            $refEnv = $symbol->value['env'];
+            $refName = $symbol->value['name'];
+            $refSymbol = $refEnv->lookup($refName);
+            if ($refSymbol === null) {
+                $this->semanticError("Referencia inválida del puntero '{$name}'", $ctx);
+                return GolampiValue::nil();
+            }
+            $arrayObj = $refSymbol->value;
+        }
+
+        if (!($arrayObj instanceof GolampiArray)) {
             $this->semanticError("'{$name}' no es un arreglo", $ctx);
             return GolampiValue::nil();
         }
 
-        $array = $symbol->value;
         $indices = [];
-
         foreach ($ctx->expr() as $exprCtx) {
             $idx = $this->visit($exprCtx);
             if ($idx === null || !$idx->isInt()) {
@@ -341,14 +402,14 @@ trait ExpressionTrait
             $indices[] = (int) $idx->value;
         }
 
-        $result = $array->get($indices);
+        $result = $arrayObj->get($indices);
 
         if ($result === null) {
             $this->semanticError("Índice fuera de rango en arreglo '{$name}'", $ctx);
             return GolampiValue::nil();
         }
 
-        return new GolampiValue($array->elementType, $result);
+        return new GolampiValue($arrayObj->elementType, $result);
     }
 
     /**
