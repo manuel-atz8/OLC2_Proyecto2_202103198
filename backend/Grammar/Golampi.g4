@@ -30,6 +30,7 @@ returnType
 // Variables y constantes
 varDeclaration
     : VAR idList arrayDimension* type ('=' exprList)?
+    | VAR idList '=' exprList
     ;
 
 constDeclaration
@@ -193,6 +194,7 @@ atom
     | TRUE                                  # TrueAtom
     | FALSE                                 # FalseAtom
     | NIL                                   # NilAtom
+    | (INT32_T | INT_T | FLOAT32_T | BOOL_T | RUNE_T | STRING_T) '(' expr ')'  # CastAtom
     | ID '.' ID '(' argList? ')'            # MethodAtom
     | ID '(' argList? ')'                   # CallAtom
     | ID ('[' expr ']')+                    # IndexAtom
@@ -213,6 +215,7 @@ arrayInitList
 
 nestedInit
     : '{' expr (',' expr)* ','? '}'
+    | '{' nestedInit (',' nestedInit)* ','? '}'
     ;
 
 // Argumentos 

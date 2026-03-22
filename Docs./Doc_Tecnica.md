@@ -28,6 +28,7 @@ Las funciones soportan retorno simple y múltiple. Los parámetros pueden ser po
 ### 1.3 Variables y Constantes
 ```
 varDeclaration   → VAR idList arrayDimension* type ('=' exprList)?
+                 | VAR idList '=' exprList
 constDeclaration → CONST ID type '=' expr
 shortVarDecl     → idList ':=' exprList
 
@@ -102,6 +103,7 @@ unaryExpr → '!' unaryExpr
 ```
 atom → FLOAT_LIT | INT_LIT | RUNE_LIT | STRING_LIT
      | TRUE | FALSE | NIL
+     | TYPE '(' expr ')'              (casteo: int32(x), float32(y))
      | ID '.' ID '(' argList? ')'     (método: fmt.Println)
      | ID '(' argList? ')'            (llamada a función)
      | ID ('[' expr ']')+             (acceso a arreglo)
@@ -128,6 +130,35 @@ type → INT32_T | INT_T | FLOAT32_T | BOOL_T | RUNE_T | STRING_T
 | ID | `[a-zA-Z_][a-zA-Z0-9_]*` |
 | LINE_COMMENT | `'//' ~[\r\n]*` → skip |
 | BLOCK_COMMENT | `'/*' .*? '*/'` → skip |
+
+---
+
+### 1.11 Características adicionales
+
+**Casteo de tipos:**
+El lenguaje soporta conversión explícita de tipos usando la sintaxis `tipo(expresión)`:
+```
+int32(3.14)    → 3
+float32(42)    → 42.0
+rune("A")      → 65
+string(65)     → "65"
+```
+
+**Indexación de strings:**
+Se puede acceder a caracteres individuales de un string por índice, retornando un valor de tipo `rune`:
+```
+var texto string = "Hola"
+var c rune = texto[0]    → 72 (código Unicode de 'H')
+```
+
+**Arreglos N-dimensionales:**
+La inicialización de arreglos soporta cualquier nivel de anidamiento:
+```
+var cubo [2][2][2]int32 = [2][2][2]int32{
+    {{1, 2}, {3, 4}},
+    {{5, 6}, {7, 8}},
+}
+```
 
 ---
 

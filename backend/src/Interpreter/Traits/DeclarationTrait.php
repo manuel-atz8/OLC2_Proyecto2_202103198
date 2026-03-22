@@ -18,6 +18,67 @@ trait DeclarationTrait
     public function visitVarDeclaration($ctx): mixed
     {
         $ids = $ctx->idList()->ID();
+
+        // Caso: var sin tipo (var x, y = expr, expr) — infiere tipos
+        if ($ctx->type() === null) {
+            $exprs = $ctx->exprList()->expr();
+
+            // Puede ser multi-retorno: var a, b, c = func()
+            if (count($ids) > 1 && count($exprs) === 1) {
+                $this->lastMultiReturn = [];
+                $val = $this->visit($exprs[0]);
+
+                if (!empty($this->lastMultiReturn) && count($this->lastMultiReturn) === count($ids)) {
+                    foreach ($ids as $i => $idToken) {
+                        $name = $idToken->getText();
+                        $line = $idToken->getSymbol()->getLine();
+                        $col = $idToken->getSymbol()->getCharPositionInLine();
+
+                        $v = $this->lastMultiReturn[$i];
+                        $type = $v->isNil() ? 'nil' : $v->type;
+
+                        if ($this->env->lookupLocal($name) === null) {
+                            $symbol = new Symbol($name, $type, $v->value, $this->env->getScopeName(), 'variable', $line, $col);
+                            $this->env->declare($symbol);
+                            $this->symbolTable->register($symbol);
+                        } else {
+                            $this->env->assign($name, $v->value);
+                        }
+                    }
+                    return null;
+                }
+
+                $this->semanticError("La cantidad de identificadores no coincide con las expresiones", $ctx);
+                return null;
+            }
+
+            if (count($ids) !== count($exprs)) {
+                $this->semanticError("La cantidad de identificadores no coincide con las expresiones", $ctx);
+                return null;
+            }
+
+            foreach ($ids as $i => $idToken) {
+                $name = $idToken->getText();
+                $line = $idToken->getSymbol()->getLine();
+                $col = $idToken->getSymbol()->getCharPositionInLine();
+
+                if ($this->env->lookupLocal($name) !== null) {
+                    $this->semanticError("Identificador '{$name}' ya declarado en este ámbito", $ctx);
+                    continue;
+                }
+
+                $val = $this->visit($exprs[$i]);
+                if ($val === null) $val = GolampiValue::nil();
+
+                $type = $val->isNil() ? 'nil' : $val->type;
+                $symbol = new Symbol($name, $type, $val->value, $this->env->getScopeName(), 'variable', $line, $col);
+                $this->env->declare($symbol);
+                $this->symbolTable->register($symbol);
+            }
+
+            return null;
+        }
+
         $type = $this->resolveType($ctx->type());
         $dims = $ctx->arrayDimension();
         $hasInit = $ctx->exprList() !== null;

@@ -509,6 +509,16 @@ interface GolampiVisitor extends ParseTreeVisitor
 	public function visitNilAtom(Context\NilAtomContext $context);
 
 	/**
+	 * Visit a parse tree produced by the `CastAtom` labeled alternative
+	 * in {@see GolampiParser::atom()}.
+	 *
+	 * @param Context\CastAtomContext $context The parse tree.
+	 *
+	 * @return mixed The visitor result.
+	 */
+	public function visitCastAtom(Context\CastAtomContext $context);
+
+	/**
 	 * Visit a parse tree produced by the `MethodAtom` labeled alternative
 	 * in {@see GolampiParser::atom()}.
 	 *

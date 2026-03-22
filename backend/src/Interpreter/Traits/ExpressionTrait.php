@@ -360,9 +360,8 @@ trait ExpressionTrait
         return new GolampiValue($symbol->dataType, $symbol->value);
     }
 
-
     /**
-     * ID[expr] — acceso a arreglo
+     * ID[expr] — acceso a arreglo o carácter de string
      */
     public function visitIndexAtom($ctx): mixed
     {
@@ -370,12 +369,13 @@ trait ExpressionTrait
         $symbol = $this->env->lookup($name);
 
         if ($symbol === null) {
-            $this->semanticError("Arreglo '{$name}' no declarado", $ctx);
+            $this->semanticError("'{$name}' no declarado", $ctx);
             return GolampiValue::nil();
         }
 
-        // Auto-desreferencia puntero a arreglo
-        $arrayObj = $symbol->value;
+        // Auto-desreferencia puntero
+        $actualValue = $symbol->value;
+        $actualType = $symbol->dataType;
         if (str_starts_with($symbol->dataType, '*') && is_array($symbol->value) && isset($symbol->value['env'])) {
             $refEnv = $symbol->value['env'];
             $refName = $symbol->value['name'];
@@ -384,32 +384,51 @@ trait ExpressionTrait
                 $this->semanticError("Referencia inválida del puntero '{$name}'", $ctx);
                 return GolampiValue::nil();
             }
-            $arrayObj = $refSymbol->value;
+            $actualValue = $refSymbol->value;
+            $actualType = $refSymbol->dataType;
         }
 
-        if (!($arrayObj instanceof GolampiArray)) {
-            $this->semanticError("'{$name}' no es un arreglo", $ctx);
-            return GolampiValue::nil();
-        }
-
+        // Obtener índices
         $indices = [];
         foreach ($ctx->expr() as $exprCtx) {
             $idx = $this->visit($exprCtx);
             if ($idx === null || !$idx->isInt()) {
-                $this->semanticError("El índice del arreglo debe ser entero", $ctx);
+                $this->semanticError("El índice debe ser entero", $ctx);
                 return GolampiValue::nil();
             }
             $indices[] = (int) $idx->value;
         }
 
-        $result = $arrayObj->get($indices);
+        // String indexing: texto[i] retorna rune
+        if ($actualType === 'string' && is_string($actualValue)) {
+            if (count($indices) !== 1) {
+                $this->semanticError("String solo acepta un índice", $ctx);
+                return GolampiValue::nil();
+            }
+            $i = $indices[0];
+            $len = mb_strlen($actualValue, 'UTF-8');
+            if ($i < 0 || $i >= $len) {
+                $this->semanticError("Índice fuera de rango en string '{$name}'", $ctx);
+                return GolampiValue::nil();
+            }
+            $char = mb_substr($actualValue, $i, 1, 'UTF-8');
+            return new GolampiValue('rune', mb_ord($char, 'UTF-8'));
+        }
+
+        // Array indexing
+        if (!($actualValue instanceof GolampiArray)) {
+            $this->semanticError("'{$name}' no es un arreglo", $ctx);
+            return GolampiValue::nil();
+        }
+
+        $result = $actualValue->get($indices);
 
         if ($result === null) {
             $this->semanticError("Índice fuera de rango en arreglo '{$name}'", $ctx);
             return GolampiValue::nil();
         }
 
-        return new GolampiValue($arrayObj->elementType, $result);
+        return new GolampiValue($actualValue->elementType, $result);
     }
 
     /**
@@ -418,6 +437,33 @@ trait ExpressionTrait
     public function visitParenAtom($ctx): mixed
     {
         return $this->visit($ctx->expr());
+    }
+
+    /**
+     * int32(expr), float32(expr), rune(expr), string(expr) — type casting
+     */
+    public function visitCastAtom($ctx): mixed
+    {
+        $typeName = $ctx->getChild(0)->getText();
+        $val = $this->visit($ctx->expr());
+
+        if ($val === null || $val->isNil()) {
+            return GolampiValue::nil();
+        }
+
+        // Normalizar tipo
+        if ($typeName === 'int') {
+            $typeName = 'int32';
+        }
+
+        return match ($typeName) {
+            'int32' => new GolampiValue('int32', (int) $val->value),
+            'float32' => new GolampiValue('float32', (float) $val->value),
+            'rune' => new GolampiValue('rune', is_string($val->value) ? mb_ord($val->value, 'UTF-8') : (int) $val->value),
+            'bool' => new GolampiValue('bool', (bool) $val->value),
+            'string' => new GolampiValue('string', $val->toPrintable()),
+            default => GolampiValue::nil(),
+        };
     }
 
     /**
@@ -462,21 +508,44 @@ trait ExpressionTrait
             return $elements;
         }
 
-        // Inicialización anidada: {{1, 2}, {3, 4}}
+        // Inicialización anidada: {{1, 2}, {3, 4}} o {{{1,2},{3,4}},{{5,6},{7,8}}}
         if (str_contains($class, 'NestedInitList')) {
             $elements = [];
             foreach ($ctx->nestedInit() as $nested) {
-                $row = [];
-                foreach ($nested->expr() as $exprCtx) {
-                    $val = $this->visit($exprCtx);
-                    $row[] = $val !== null ? $val->value : GolampiValue::defaultFor($baseType)->value;
-                }
-                $elements[] = $row;
+                $elements[] = $this->resolveNestedInit($nested, $baseType);
             }
             return $elements;
         }
 
         return [];
+    }
+
+    /**
+     * Resuelve un nestedInit recursivamente.
+     * Puede contener expresiones directas o más nestedInits.
+     */
+    private function resolveNestedInit($ctx, string $baseType): array
+    {
+        $result = [];
+
+        // Si tiene expresiones directas: {1, 2, 3}
+        if ($ctx->expr() !== null && count($ctx->expr()) > 0) {
+            foreach ($ctx->expr() as $exprCtx) {
+                $val = $this->visit($exprCtx);
+                $result[] = $val !== null ? $val->value : GolampiValue::defaultFor($baseType)->value;
+            }
+            return $result;
+        }
+
+        // Si tiene nestedInits: {{1,2}, {3,4}}
+        if ($ctx->nestedInit() !== null && count($ctx->nestedInit()) > 0) {
+            foreach ($ctx->nestedInit() as $nested) {
+                $result[] = $this->resolveNestedInit($nested, $baseType);
+            }
+            return $result;
+        }
+
+        return $result;
     }
 
     

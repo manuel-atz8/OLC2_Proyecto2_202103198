@@ -582,6 +582,18 @@ interface GolampiListener extends ParseTreeListener {
 	 */
 	public function exitNilAtom(Context\NilAtomContext $context): void;
 	/**
+	 * Enter a parse tree produced by the `CastAtom`
+	 * labeled alternative in {@see GolampiParser::atom()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterCastAtom(Context\CastAtomContext $context): void;
+	/**
+	 * Exit a parse tree produced by the `CastAtom` labeled alternative
+	 * in {@see GolampiParser::atom()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitCastAtom(Context\CastAtomContext $context): void;
+	/**
 	 * Enter a parse tree produced by the `MethodAtom`
 	 * labeled alternative in {@see GolampiParser::atom()}.
 	 * @param $context The parse tree.
