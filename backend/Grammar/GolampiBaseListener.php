@@ -437,6 +437,19 @@ class GolampiBaseListener implements GolampiListener
 	 *
 	 * The default implementation does nothing.
 	 */
+	public function enterRepeatStmt(Context\RepeatStmtContext $context): void {}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
+	public function exitRepeatStmt(Context\RepeatStmtContext $context): void {}
+	/**
+	 * {@inheritdoc}
+	 *
+	 * The default implementation does nothing.
+	 */
 	public function enterReturnStmt(Context\ReturnStmtContext $context): void {}
 
 	/**

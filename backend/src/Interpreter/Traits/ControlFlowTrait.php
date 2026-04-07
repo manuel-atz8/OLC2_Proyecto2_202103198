@@ -228,4 +228,31 @@ trait ControlFlowTrait
     {
         throw new ContinueSignal();
     }
+
+    /**
+     * repeat N { stmts }
+     */
+    public function visitRepeatStmt($ctx): mixed
+    {
+        $countVal = $this->visit($ctx->expr());
+
+        if ($countVal === null || !$countVal->isInt()) {
+            $this->semanticError("La expresión de 'repeat' debe ser un entero", $ctx);
+            return null;
+        }
+
+        $n = (int) $countVal->value;
+
+        for ($i = 0; $i < $n; $i++) {
+            try {
+                $this->executeBlock($ctx->block(), 'repeat');
+            } catch (BreakSignal $e) {
+                break;
+            } catch (ContinueSignal $e) {
+                continue;
+            }
+        }
+
+        return null;
+    }
 }

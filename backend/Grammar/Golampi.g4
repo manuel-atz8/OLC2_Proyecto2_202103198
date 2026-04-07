@@ -67,6 +67,7 @@ stmt
     | ifStmt
     | switchStmt
     | forStmt
+    | repeatStmt
     | BREAK
     | CONTINUE
     | returnStmt
@@ -137,6 +138,10 @@ forInit
 forPost
     : assignStmt
     | incDecStmt
+    ;
+
+repeatStmt
+    : REPEAT expr block
     ;
 
 // Return
@@ -253,6 +258,7 @@ FOR      : 'for';
 BREAK    : 'break';
 CONTINUE : 'continue';
 RETURN   : 'return';
+REPEAT   : 'repeat';
 TRUE     : 'true';
 FALSE    : 'false';
 NIL      : 'nil';
