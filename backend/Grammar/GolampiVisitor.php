@@ -308,15 +308,6 @@ interface GolampiVisitor extends ParseTreeVisitor
 	public function visitForPost(Context\ForPostContext $context);
 
 	/**
-	 * Visit a parse tree produced by {@see GolampiParser::repeatStmt()}.
-	 *
-	 * @param Context\RepeatStmtContext $context The parse tree.
-	 *
-	 * @return mixed The visitor result.
-	 */
-	public function visitRepeatStmt(Context\RepeatStmtContext $context);
-
-	/**
 	 * Visit a parse tree produced by {@see GolampiParser::returnStmt()}.
 	 *
 	 * @param Context\ReturnStmtContext $context The parse tree.

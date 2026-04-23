@@ -34,6 +34,7 @@ class Router
 
         match ($body['action']) {
             'execute' => self::executeCode($body),
+            'compile' => self::compileCode($body),
             default   => self::respond(400, ['error' => "Acción '{$body['action']}' no reconocida."]),
         };
     }
@@ -50,6 +51,22 @@ class Router
 
         $interpreter = new Interpreter($body['code']);
         $result = $interpreter->run();
+
+        self::respond(200, $result);
+    }
+
+    /**
+     * Compila código Golampi a ensamblador ARM64.
+     */
+    private static function compileCode(array $body): void
+    {
+        if (!isset($body['code']) || trim($body['code']) === '') {
+            self::respond(400, ['error' => 'No se recibió código fuente.']);
+            return;
+        }
+
+        $compiler = new Compiler($body['code']);
+        $result = $compiler->run();
 
         self::respond(200, $result);
     }

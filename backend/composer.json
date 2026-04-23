@@ -1,6 +1,6 @@
 {
-    "name": "mnl/golampi-interpreter",
-    "description": "golampi",
+    "name": "mnl/golampi-compiler",
+    "description": "Compilador del lenguaje Golampi que genera codigo ensamblador ARM64 (AArch64) ejecutable mediante QEMU user mode.",
     "type": "project",
     "license": "MIT",
     "autoload": {
