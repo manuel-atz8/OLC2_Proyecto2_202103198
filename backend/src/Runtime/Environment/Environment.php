@@ -7,6 +7,9 @@ class Environment
     private array $symbols = [];
     private ?Environment $parent;
     private string $scopeName;
+    // === Campos nuevos para el compilador (Fase 2) ===
+    /** Siguiente offset disponible en el frame (crece hacia abajo). */
+    private int $nextOffset = 0;
 
     public function __construct(?Environment $parent = null, string $scopeName = 'global')
     {
@@ -113,5 +116,50 @@ class Environment
     public function createChild(string $scopeName): Environment
     {
         return new Environment($this, $scopeName);
+    }
+
+    //===================================================================================================================
+
+    /*
+    // === Campos nuevos para el compilador (Fase 2) ===
+    // Siguiente offset disponible en el frame (crece hacia abajo). 
+    private int $nextOffset = 0;
+    */
+
+    /**
+     * Reserva espacio para una variable local en el stack frame.
+     * Retorna el offset asignado (negativo, relativo a x29).
+     * El compilador llama esto; el intérprete lo ignora.
+     */
+    public function allocateLocal(int $size): int
+    {
+        // Alinear a 4 bytes mínimo (ARM64 requiere accesos alineados)
+        if ($size < 4) {
+            $size = 4;
+        }
+
+        $this->nextOffset += $size;
+        return $this->nextOffset;
+    }
+
+    /**
+     * Retorna el tamaño total del frame de este scope, alineado a 16 bytes.
+     * ARM64 ABI requiere que sp siempre esté alineado a 16.
+     */
+    public function getFrameSize(): int
+    {
+        if ($this->nextOffset === 0) {
+            return 0;
+        }
+        // Redondear al múltiplo de 16 superior
+        return (int)(ceil($this->nextOffset / 16) * 16);
+    }
+
+    /**
+     * Resetea el contador de offsets (para reutilizar en nueva pasada).
+     */
+    public function resetOffsets(): void
+    {
+        $this->nextOffset = 0;
     }
 }

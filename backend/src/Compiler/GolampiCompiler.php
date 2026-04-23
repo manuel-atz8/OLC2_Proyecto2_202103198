@@ -5,6 +5,10 @@ namespace Golampi\Compiler;
 use Golampi\Runtime\Environment\Environment;
 use Golampi\Runtime\Environment\SymbolTableCollector;
 use Golampi\Errors\ErrorCollector;
+use Golampi\Compiler\AssemblyEmitter;
+use Golampi\Compiler\LabelGenerator;
+use Golampi\Compiler\StringPool;
+use Golampi\Compiler\TypeSizes;
 
 class GolampiCompiler extends \GolampiBaseVisitor
 {
@@ -13,8 +17,20 @@ class GolampiCompiler extends \GolampiBaseVisitor
     public SymbolTableCollector $symbolTable;
     public ErrorCollector $errors;
 
-    /** Código ensamblador ARM64 acumulado (el .s final). */
-    private string $assembly = '';
+    /** Emisor de código ensamblador ARM64. */
+    public AssemblyEmitter $emitter;
+
+    /** Generador de etiquetas únicas. */
+    public LabelGenerator $labels;
+
+    /** Pool de literales string para .data. */
+    public StringPool $stringPool;
+
+    /** Pila de contextos de bucle para break/continue. */
+    public array $loopStack = [];
+
+    /** Nombre de la función actual (para etiquetas de epílogo). */
+    public string $currentFunction = '';
 
     public function __construct()
     {
@@ -22,16 +38,26 @@ class GolampiCompiler extends \GolampiBaseVisitor
         $this->env = $this->globalEnv;
         $this->symbolTable = new SymbolTableCollector();
         $this->errors = ErrorCollector::getInstance();
+        $this->emitter = new AssemblyEmitter();
+        $this->labels = new LabelGenerator();
+        $this->stringPool = new StringPool();
     }
 
     /**
-     * Punto de entrada: por ahora emite un "hello world" ARM64 hardcodeado
-     * que termina con exit(0). Sirve para validar el pipeline completo
-     * antes de implementar el codegen real en la Fase 4.
+     * Punto de entrada: por ahora sigue emitiendo el stub,
+     * pero usando el AssemblyEmitter para validar la integración.
+     * Se reemplaza con codegen real en la Fase 4.
      */
     public function visitProgram($ctx): mixed
     {
-        $this->assembly = $this->buildHelloWorldStub();
+        // Stub Fase 2: programa mínimo que hace exit(0)
+        // usando el emitter real en lugar de un string hardcodeado.
+        $this->emitter->label('_start');
+        $this->emitter->comment('Stub Fase 2 - se reemplaza en Fase 4');
+        $this->emitter->emit('mov x0, #0');
+        $this->emitter->emit('mov x8, #93');
+        $this->emitter->emit('svc #0');
+
         return null;
     }
 
@@ -40,30 +66,21 @@ class GolampiCompiler extends \GolampiBaseVisitor
      */
     public function getAssembly(): string
     {
-        return $this->assembly;
+        return $this->emitter->build($this->stringPool);
     }
 
     /**
-     * Stub temporal: programa ARM64 mínimo que termina con exit(0).
-     * Se reemplaza con codegen real en la Fase 4.
+     * Helper: reporta error semántico desde cualquier punto.
      */
-    private function buildHelloWorldStub(): string
+    public function semanticError(string $msg, $ctx): void
     {
-        return <<<ASM
-// ============================================================
-// Golampi Compiler - Stub Fase 1
-// Este archivo se reemplaza con codegen real en la Fase 4.
-// Por ahora solo emite un programa ARM64 valido que hace exit(0).
-// ============================================================
-
-.global _start
-
-.section .text
-_start:
-    mov x0, #0          // exit code = 0
-    mov x8, #93         // syscall: exit
-    svc #0
-
-ASM;
+        $line = 0;
+        $col = 0;
+        if ($ctx !== null && method_exists($ctx, 'getStart')) {
+            $token = $ctx->getStart();
+            $line = $token->getLine();
+            $col = $token->getCharPositionInLine();
+        }
+        $this->errors->addSemantic($msg, $line, $col);
     }
 }
