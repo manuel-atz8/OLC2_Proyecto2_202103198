@@ -4,9 +4,10 @@ const API_URL = '/api.php'
 
 function App() {
   const [code, setCode] = useState('')
-  const [output, setOutput] = useState('')
+  const [consoleOutput, setConsoleOutput] = useState('')
   const [loading, setLoading] = useState(false)
   const [lastResult, setLastResult] = useState(null)
+  const [qemuOutput, setQemuOutput] = useState(null)
   const editorRef = useRef(null)
   const lineNumbersRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -46,8 +47,9 @@ function App() {
   const handleNew = () => {
     if (code.trim() !== '' && !confirm('¿Deseas limpiar el editor?')) return
     setCode('')
-    setOutput('')
+    setConsoleOutput('')
     setLastResult(null)
+    setQemuOutput(null)
   }
 
   // Abrir archivo
@@ -68,21 +70,22 @@ function App() {
     downloadFile('programa.gol', code, 'text/plain')
   }
 
-  // Ejecutar
-  const handleRun = async () => {
+  // Compilar
+  const handleCompile = async () => {
     if (code.trim() === '') {
-      setOutput('No hay código para ejecutar.')
+      setConsoleOutput('No hay código para compilar.')
       return
     }
 
-    setOutput('Ejecutando...\n')
+    setConsoleOutput('Compilando...\n')
     setLoading(true)
+    setQemuOutput(null)
 
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'execute', code }),
+        body: JSON.stringify({ action: 'compile', code }),
       })
 
       if (!response.ok) throw new Error(`Error HTTP: ${response.status}`)
@@ -90,22 +93,31 @@ function App() {
       const result = await response.json()
       setLastResult(result)
 
-      let text = result.output || ''
-
       if (result.hasErrors) {
-        text += '\n--- ERRORES ---\n'
+        let text = '--- ERRORES DE COMPILACIÓN ---\n'
         result.errors.forEach((err) => {
           text += `[${err.type}] Línea ${err.line}:${err.column} - ${err.description}\n`
         })
+        if (result.assembly) {
+          text += '\n--- CÓDIGO ARM64 GENERADO (parcial) ---\n'
+          text += result.assembly
+        }
+        setConsoleOutput(text)
+      } else {
+        setConsoleOutput(result.assembly || 'Compilación finalizada sin salida.')
       }
-
-      setOutput(text || 'Ejecución finalizada sin salida.')
     } catch (error) {
-      setOutput('Error de conexión: ' + error.message + '\nVerifica que el servidor PHP esté activo.')
+      setConsoleOutput('Error de conexión: ' + error.message + '\nVerifica que el servidor PHP esté activo.')
       setLastResult(null)
     }
 
     setLoading(false)
+  }
+
+  // Ejecutar en QEMU (Fase 7 — por ahora placeholder)
+  const handleRunQemu = async () => {
+    if (!lastResult || !lastResult.assembly) return
+    setQemuOutput('⏳ Ejecución en QEMU aún no implementada (Fase 7)...')
   }
 
   // Descargas
@@ -120,28 +132,37 @@ function App() {
   }
 
   const hasResult = lastResult !== null
+  const hasAssembly = hasResult && lastResult.assembly && lastResult.assembly.trim() !== ''
 
   return (
     <div className="h-screen flex flex-col bg-[#0f0f1a] text-gray-200 overflow-hidden">
 
       {/* TOOLBAR */}
       <header className="flex items-center justify-between px-4 py-2 bg-[#1a1a2e] border-b border-[#2a2a4a]">
-        <h1 className="text-lg font-bold text-blue-400 tracking-wide">
-          Golampi Interpreter
+        <h1 className="text-lg font-bold text-cyan-400 tracking-wide">
+          Golampi Compiler
         </h1>
         <div className="flex gap-2">
           <ToolbarButton onClick={handleNew} label="Nuevo" />
           <ToolbarButton onClick={handleOpen} label="Abrir" />
           <ToolbarButton onClick={handleSave} label="Guardar" />
           <button
-            onClick={handleRun}
+            onClick={handleCompile}
             disabled={loading}
-            className="px-4 py-1.5 rounded-md text-sm font-bold bg-emerald-500 text-[#0f0f1a] 
-                       hover:bg-emerald-400 transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+            className="px-4 py-1.5 rounded-md text-sm font-bold bg-cyan-500 text-[#0f0f1a] 
+                       hover:bg-cyan-400 transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
           >
-            {loading ? 'Ejecutando...' : 'Ejecutar'}
+            {loading ? 'Compilando...' : 'Compilar'}
           </button>
-          <ToolbarButton onClick={() => setOutput('')} label="Limpiar Consola" />
+          <button
+            onClick={handleRunQemu}
+            disabled={!hasAssembly}
+            className="px-4 py-1.5 rounded-md text-sm font-bold bg-amber-500 text-[#0f0f1a] 
+                       hover:bg-amber-400 transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+          >
+            Ejecutar QEMU
+          </button>
+          <ToolbarButton onClick={() => { setConsoleOutput(''); setQemuOutput(null); }} label="Limpiar Consola" />
         </div>
       </header>
 
@@ -150,7 +171,7 @@ function App() {
 
         {/* EDITOR */}
         <section className="flex-1 flex flex-col bg-[#1a1a2e] border border-[#2a2a4a] rounded-lg overflow-hidden">
-          <PanelHeader title="Editor de Código" />
+          <PanelHeader title="Editor de Código - Golampi" />
           <div className="flex flex-1 overflow-hidden">
             <div
               ref={lineNumbersRef}
@@ -178,31 +199,42 @@ function App() {
         {/* LADO DERECHO */}
         <div className="flex flex-col w-[38%] gap-1">
 
-          {/* CONSOLA */}
+          {/* CONSOLA ARM64 */}
           <section className="flex-1 flex flex-col bg-[#1a1a2e] border border-[#2a2a4a] rounded-lg overflow-hidden">
-            <PanelHeader title="Consola de Salida" />
-            <pre className="flex-1 p-2.5 font-mono text-sm leading-6 text-emerald-400 bg-[#0a0a14] 
+            <PanelHeader title="Consola - Código ARM64 Generado" />
+            <pre className="flex-1 p-2.5 font-mono text-sm leading-6 text-cyan-400 bg-[#0a0a14] 
                             overflow-auto whitespace-pre-wrap break-words">
-              {output}
+              {consoleOutput}
             </pre>
           </section>
+
+          {/* SALIDA QEMU (solo visible si hay resultado) */}
+          {qemuOutput !== null && (
+            <section className="bg-[#1a1a2e] border border-[#2a2a4a] rounded-lg overflow-hidden max-h-[25%]">
+              <PanelHeader title="Salida — Ejecución QEMU" />
+              <pre className="p-2.5 font-mono text-sm leading-6 text-amber-400 bg-[#0a0a14] 
+                              overflow-auto whitespace-pre-wrap break-words">
+                {qemuOutput}
+              </pre>
+            </section>
+          )}
 
           {/* REPORTES */}
           <section className="bg-[#1a1a2e] border border-[#2a2a4a] rounded-lg overflow-hidden">
             <PanelHeader title="Reportes" />
             <div className="flex flex-col gap-1.5 p-2.5">
               <ReportButton
-                label="Descargar Resultado"
-                disabled={!hasResult}
-                onClick={() => downloadFile('resultado.txt', lastResult.output, 'text/plain')}
+                label="⬇ Descargar ARM64 (.s)"
+                disabled={!hasAssembly}
+                onClick={() => downloadFile('programa.s', lastResult.assembly, 'text/plain')}
               />
               <ReportButton
-                label="Descargar Errores"
+                label="⬇ Descargar Errores"
                 disabled={!hasResult}
                 onClick={() => downloadFile('errores.html', lastResult.errorsHtml, 'text/html')}
               />
               <ReportButton
-                label="Descargar Tabla de Símbolos"
+                label="⬇ Descargar Tabla de Símbolos"
                 disabled={!hasResult}
                 onClick={() => downloadFile('tabla_simbolos.html', lastResult.symbolsHtml, 'text/html')}
               />
@@ -227,7 +259,7 @@ function App() {
 
 function PanelHeader({ title }) {
   return (
-    <div className="px-3 py-1.5 bg-[#2a2a4a] text-sm font-semibold text-blue-400 border-b border-[#3a3a5a]">
+    <div className="px-3 py-1.5 bg-[#2a2a4a] text-sm font-semibold text-cyan-400 border-b border-[#3a3a5a]">
       {title}
     </div>
   )
@@ -238,7 +270,7 @@ function ToolbarButton({ onClick, label }) {
     <button
       onClick={onClick}
       className="px-3 py-1.5 rounded-md text-sm bg-[#2a2a4a] border border-[#3a3a5a] 
-                 hover:bg-[#3a3a5a] hover:border-blue-400 transition-colors cursor-pointer"
+                 hover:bg-[#3a3a5a] hover:border-cyan-400 transition-colors cursor-pointer"
     >
       {label}
     </button>
@@ -251,7 +283,7 @@ function ReportButton({ label, disabled, onClick }) {
       onClick={onClick}
       disabled={disabled}
       className="w-full text-left px-3 py-2 rounded-md text-sm bg-[#2a2a4a] border border-[#3a3a5a]
-                 hover:bg-[#3a3a5a] hover:border-blue-400 transition-colors
+                 hover:bg-[#3a3a5a] hover:border-cyan-400 transition-colors
                  disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
     >
       {label}
