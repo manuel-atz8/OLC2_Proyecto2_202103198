@@ -35,12 +35,13 @@ class Router
         match ($body['action']) {
             'execute' => self::executeCode($body),
             'compile' => self::compileCode($body),
+            'run'     => self::compileAndRunCode($body),
             default   => self::respond(400, ['error' => "Acción '{$body['action']}' no reconocida."]),
         };
     }
 
     /**
-     * Ejecuta código Golampi.
+     * Ejecuta código Golampi con el intérprete (Proyecto 1 legacy).
      */
     private static function executeCode(array $body): void
     {
@@ -56,7 +57,7 @@ class Router
     }
 
     /**
-     * Compila código Golampi a ensamblador ARM64.
+     * Compila código Golampi a ensamblador ARM64 (solo genera .s).
      */
     private static function compileCode(array $body): void
     {
@@ -66,7 +67,23 @@ class Router
         }
 
         $compiler = new Compiler($body['code']);
-        $result = $compiler->run();
+        $result = $compiler->compile();
+
+        self::respond(200, $result);
+    }
+
+    /**
+     * Compila, ensambla, enlaza y ejecuta en QEMU.
+     */
+    private static function compileAndRunCode(array $body): void
+    {
+        if (!isset($body['code']) || trim($body['code']) === '') {
+            self::respond(400, ['error' => 'No se recibió código fuente.']);
+            return;
+        }
+
+        $compiler = new Compiler($body['code']);
+        $result = $compiler->compileAndRun();
 
         self::respond(200, $result);
     }

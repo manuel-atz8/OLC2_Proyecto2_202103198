@@ -1,0 +1,8 @@
+func suma(a int32, b int32) int32 {
+    return a + b
+}
+
+func main() {
+    r := suma(3, 4)
+    fmt.Println(r)
+}

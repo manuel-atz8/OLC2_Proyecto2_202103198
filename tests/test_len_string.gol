@@ -1,0 +1,4 @@
+func main() {
+    var s string = "Hola"
+    fmt.Println(len(s))
+}

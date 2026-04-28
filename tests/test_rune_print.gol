@@ -1,0 +1,4 @@
+func main() {
+    var c rune = 'A'
+    fmt.Println(c)
+}

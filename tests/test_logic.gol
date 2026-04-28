@@ -1,0 +1,17 @@
+func main() {
+    if true && true {
+        fmt.Println(1)
+    }
+    if true && false {
+        fmt.Println(2)
+    }
+    if false || true {
+        fmt.Println(3)
+    }
+    if false || false {
+        fmt.Println(4)
+    }
+    if !false {
+        fmt.Println(5)
+    }
+}

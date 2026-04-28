@@ -1,0 +1,7 @@
+func main() {
+    x := 3
+    for x > 0 {
+        fmt.Println(x)
+        x -= 1
+    }
+}

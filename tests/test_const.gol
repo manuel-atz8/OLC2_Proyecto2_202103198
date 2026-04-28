@@ -1,0 +1,4 @@
+func main() {
+    const max int32 = 100
+    fmt.Println(max)
+}

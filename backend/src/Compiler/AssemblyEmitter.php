@@ -36,6 +36,7 @@ class AssemblyEmitter
 
     /**
      * Emite una etiqueta (sin indentación, con ':' al final).
+     * Acepta nombres con o sin punto inicial (e.g. "_start" o ".L_if_end_0").
      */
     public function label(string $name): void
     {

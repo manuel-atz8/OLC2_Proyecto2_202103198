@@ -128,12 +128,16 @@ class Environment
 
     /**
      * Reserva espacio para una variable local en el stack frame.
-     * Retorna el offset asignado (negativo, relativo a x29).
-     * El compilador llama esto; el intérprete lo ignora.
+     * IMPORTANTE: siempre aloca en el scope raíz de la función
+     * (sube por la cadena de padres) para que getFrameSize() del
+     * scope de la función refleje el total real.
      */
     public function allocateLocal(int $size): int
     {
-        // Alinear a 4 bytes mínimo (ARM64 requiere accesos alineados)
+        if ($this->parent !== null && $this->parent->getParent() !== null) {
+            return $this->parent->allocateLocal($size);
+        }
+
         if ($size < 4) {
             $size = 4;
         }

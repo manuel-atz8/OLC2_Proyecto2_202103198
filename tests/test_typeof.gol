@@ -1,0 +1,4 @@
+func main() {
+    x := 34
+    fmt.Println(typeOf(x))
+}

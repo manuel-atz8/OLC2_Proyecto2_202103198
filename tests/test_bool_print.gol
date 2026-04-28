@@ -1,0 +1,6 @@
+func main() {
+    fmt.Println(true)
+    fmt.Println(false)
+    x := 5 > 3
+    fmt.Println(x)
+}

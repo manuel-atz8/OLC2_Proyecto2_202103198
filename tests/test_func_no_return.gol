@@ -1,0 +1,8 @@
+func imprimir(x int32) {
+    fmt.Println(x)
+}
+
+func main() {
+    imprimir(42)
+    imprimir(100)
+}

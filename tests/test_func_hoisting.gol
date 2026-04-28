@@ -1,0 +1,7 @@
+func main() {
+    saludar()
+}
+
+func saludar() {
+    fmt.Println(99)
+}
