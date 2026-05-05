@@ -152,7 +152,11 @@ exprStmt
 
 // Expresiones
 expr
-    : orExpr
+    : composeExpr
+    ;
+
+composeExpr
+    : orExpr (PIPE orExpr)*
     ;
 
 orExpr
@@ -269,6 +273,7 @@ STRING_T  : 'string';
 // Operadores lógicos
 AND : '&&';
 OR  : '||';
+PIPE : '|>';
 
 // Literales
 FLOAT_LIT  : [0-9]+ '.' [0-9]+;

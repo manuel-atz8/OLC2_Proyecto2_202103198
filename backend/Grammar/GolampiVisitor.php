@@ -335,6 +335,15 @@ interface GolampiVisitor extends ParseTreeVisitor
 	public function visitExpr(Context\ExprContext $context);
 
 	/**
+	 * Visit a parse tree produced by {@see GolampiParser::composeExpr()}.
+	 *
+	 * @param Context\ComposeExprContext $context The parse tree.
+	 *
+	 * @return mixed The visitor result.
+	 */
+	public function visitComposeExpr(Context\ComposeExprContext $context);
+
+	/**
 	 * Visit a parse tree produced by {@see GolampiParser::orExpr()}.
 	 *
 	 * @param Context\OrExprContext $context The parse tree.

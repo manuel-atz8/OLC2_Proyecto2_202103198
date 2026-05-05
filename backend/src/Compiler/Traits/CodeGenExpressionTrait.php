@@ -16,8 +16,47 @@ trait CodeGenExpressionTrait
 
     public function visitExpr($ctx): mixed
     {
-        $this->visit($ctx->orExpr());
+        //$this->visit($ctx->orExpr());
+        $this->visit($ctx->composeExpr());
         return $this->lastExprType;
+    }
+
+    public function visitComposeExpr($ctx): mixed
+    {
+        $orExprs = $ctx->orExpr();
+        $count = count($orExprs);
+
+        if($count <= 1) {
+            $this->visit($orExprs[0]);
+            return null;
+        }
+
+        $this->visit($orExprs[$count - 1]);
+
+        for($i = $count - 2; $i >= 0; $i--) {
+            $funcText = $orExprs[$i]->getText();
+
+            if(!isset($this->functions[$funcText])) {
+                $this->semanticError("Función '{$funcText}' no declarada", $ctx);
+                continue;
+            }
+
+            $this->emitter->comment("composición |> llamar {$funcText}(resultado anterior)");
+            $this->emitter->emit("str x0, [sp, #-16]!");
+            $this->emitter->emit("ldr x0, [sp], #16");
+            $this->emitter->emit("bl func_{$funcText}");
+
+            $func = $this->functions[$funcText];
+            if (!empty($func->returnTypes)) {
+                $retInfo = $func->returnTypes[0];
+                $returnType = is_array($retInfo) ? ($retInfo['type'] ?? 'int32') : $retInfo;
+                if ($returnType === 'float32') {
+                    $this->emitter->emit("fmov s0, w0");
+                }
+                $this->lastExprType = $returnType;
+            }
+        }
+            return null;
     }
 
     public function visitOrExpr($ctx): mixed

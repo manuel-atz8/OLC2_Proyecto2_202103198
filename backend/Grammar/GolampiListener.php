@@ -378,6 +378,16 @@ interface GolampiListener extends ParseTreeListener {
 	 */
 	public function exitExpr(Context\ExprContext $context): void;
 	/**
+	 * Enter a parse tree produced by {@see GolampiParser::composeExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function enterComposeExpr(Context\ComposeExprContext $context): void;
+	/**
+	 * Exit a parse tree produced by {@see GolampiParser::composeExpr()}.
+	 * @param $context The parse tree.
+	 */
+	public function exitComposeExpr(Context\ComposeExprContext $context): void;
+	/**
 	 * Enter a parse tree produced by {@see GolampiParser::orExpr()}.
 	 * @param $context The parse tree.
 	 */
